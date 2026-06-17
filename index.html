@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velocidrone Live Lap Callout</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Custom scrollbar matching terminal aesthetic */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e1e1e; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans p-4">
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-6">
+        
+        <div class="lg:col-span-2 space-y-6">
+            
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-md">
+                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">WebSocket Connection</h2>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex-1 min-w-[120px]">
+                        <label class="block text-xs text-gray-400 mb-1">IP Address</label>
+                        <input id="txt_ip" type="text" value="localhost" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-xs text-gray-400 mb-1">Port</label>
+                        <input id="spin_port" type="number" value="60003" min="1" max="65535" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="pt-5 flex items-center gap-3 w-full sm:w-auto">
+                        <button id="btn_connect" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-1.5 rounded transition">Connect</button>
+                        <span id="lbl_status" class="text-red-500 font-bold text-sm">Disconnected</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-md">
+                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Voice Synthesis Engine</h2>
+                <div class="space-y-3">
+                    <div class="flex gap-2 items-end">
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400 mb-1">Voice Target</label>
+                                <select id="combo_voices" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500"></select>
+                        </div>
+                        <button id="btn_test_voice" class="bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-200 text-sm px-3 py-1.5 rounded transition">Test Audio</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 pt-1">
+                        <div>
+                            <label class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Volume</span>
+                                <span id="val_vol">100%</span>
+                            </label>
+                            <input id="slider_vol" type="range" min="0" max="100" value="100" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                        </div>
+                        <div>
+                            <label class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Speed</span>
+                                <span id="val_rate">200</span>
+                            </label>
+                            <input id="slider_rate" type="range" min="100" max="350" value="200" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-md space-y-4">
+                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Announcement Directives & Templates</h2>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                        <input id="chk_lap" type="checkbox" checked class="rounded border-gray-600 text-blue-600 bg-gray-700 focus:ring-0"> Announce Lap Times
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                        <input id="chk_pb" type="checkbox" checked class="rounded border-gray-600 text-blue-600 bg-gray-700 focus:ring-0"> Announce PBs
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                        <input id="chk_fastest" type="checkbox" checked class="rounded border-gray-600 text-blue-600 bg-gray-700 focus:ring-0"> Announce Fastest Laps
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                        <input id="chk_finish" type="checkbox" checked class="rounded border-gray-600 text-blue-600 bg-gray-700 focus:ring-0"> Announce Finishes
+                    </label>
+                </div>
+
+                <div class="border-t border-gray-700 my-2"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Holeshot Callout</label>
+                        <select id="combo_holeshot" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
+                            <option value="first_only">first_only</option>
+                            <option value="one_selected">one_selected</option>
+                            <option value="none">none</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Target Pilot UID</label>
+                        <input id="txt_holeshot_pilot" type="text" placeholder="Target Pilot UID" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Template Format</label>
+                    <input id="combo_templates" type="text" list="template_options" value="{pilot} lap {lap_number} {lap_time}" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
+                    <datalist id="template_options">
+                        <option value="{pilot} lap {lap_number} {lap_time}"></option>
+                        <option value="{pilot} {lap_time}"></option>
+                        <option value="{lap_time}"></option>
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Queue Mode</label>
+                    <select id="combo_queue_mode" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
+                        <option value="Speak Everything">Speak Everything</option>
+                        <option value="Skip Low Priority">Skip Low Priority</option>
+                        <option value="Latest Only">Latest Only</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 flex flex-col space-y-6">
+            
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-md flex-1 flex flex-col min-h-[300px]">
+                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Active Pilot Whitelist</h2>
+                
+                <div class="flex-1 overflow-auto custom-scrollbar border border-gray-700 rounded mb-3 max-h-[250px]">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-gray-750 text-gray-300 sticky top-0 border-b border-gray-700">
+                            <tr>
+                                <th class="p-2 w-20 text-center">Announce</th>
+                                <th class="p-2">Pilot Call Sign</th>
+                                <th class="p-2">Velocidrone UID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table_pilots_body" class="divide-y divide-gray-700 bg-gray-800">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-wrap gap-2 justify-end">
+                    <input id="file_import" type="file" accept=".json" class="hidden">
+                    <button id="btn_import" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded border border-blue-500 transition">Import config.json</button>
+                    <button id="btn_export" class="bg-green-700 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded border border-green-600 transition">Export config.json</button>
+                    <button id="btn_add_pilot" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1.5 rounded border border-gray-600 transition">Manual Add Pilot</button>
+                    <button id="btn_del_pilot" class="bg-red-900/40 hover:bg-red-900/60 text-red-200 text-xs px-3 py-1.5 rounded border border-red-700/50 transition">Remove Selected</button>
+                    <button id="btn_reset_pbs" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1.5 rounded border border-gray-600 transition">Reset all PBs</button>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-md h-[280px] flex flex-col">
+                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Broadcast Logging Terminal</h2>
+                <div id="log_terminal" class="flex-1 bg-black/50 border border-gray-950 rounded p-3 font-mono text-xs text-green-400 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_CONFIG = {
+            "connection": {"ip": "localhost", "port": 60003, "heartbeat_seconds": 10},
+            "voice": {"name": "", "volume": 100, "rate": 200},
+            "announcements": {
+                "holeshot": "first_only",
+                "holeshot_pilot": "",
+                "lap_times": true,
+                "personal_bests": true,
+                "fastest_laps": true,
+                "race_finish": true,
+                "template": "{pilot} lap {lap_number} {lap_time}"
+            },
+            "queue_mode": "Speak Everything",
+            "pilots": {}
+        };
+
+        let config = JSON.parse(localStorage.getItem("vd_callout_config")) || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        let selectedRowIndex = null;
+
+        // --- Core Engine Architecture Variables ---
+        let socket = null;
+        let heartbeatInterval = null;
+        let isRunning = false;
+        let currentTrack = "Unknown Track";
+        let raceFastestLap = Infinity;
+        let holeshotTriggered = false;
+        let pilotTimingTracker = {};
+        let wasUnreachableLogged = false;
+        let wasAttemptLogged = false;
+
+        // ================= TTS MANAGER CLASS =================
+        class WebTTSAnnouncer {
+            constructor() {
+                this.queue = [];
+                this.isSpeaking = false;
+                this.synth = window.speechSynthesis;
+                this.voices = [];
+
+                if (this.synth) {
+                    const loadVoices = () => {
+                        this.voices = this.synth.getVoices();
+                        this.populateVoiceUI();
+                    };
+                    loadVoices();
+                    if (this.synth.onvoiceschanged !== undefined) {
+                        this.synth.onvoiceschanged = loadVoices;
+                    }
+                }
+            }
+
+            populateVoiceUI() {
+                const combo = document.getElementById("combo_voices");
+                const savedVoice = config.voice.name;
+                combo.innerHTML = "";
+                this.voices.forEach(voice => {
+                    const opt = document.createElement("option");
+                    opt.value = voice.name;
+                    opt.textContent = `${voice.name} (${voice.lang})`;
+                    if (voice.name === savedVoice) opt.selected = true;
+                    combo.appendChild(opt);
+                });
+            }
+
+            speakNow(text) {
+                if (!this.synth) return;
+                const utterance = new SpeechSynthesisUtterance(text);
+                const selectedVoice = this.voices.find(v => v.name === config.voice.name);
+                if (selectedVoice) utterance.voice = selectedVoice;
+                
+                utterance.volume = config.voice.volume / 100;
+                // Web Speech API rate scale runs natively from 0.1 to 10 (1 is normal). 
+                // Pyqt configuration is integer-based around 200 (200 is normal).
+                utterance.rate = config.voice.rate / 200;
+
+                this.synth.speak(utterance);
+            }
+
+            enqueue(text, priority = 1) {
+                const mode = config.queue_mode;
+                if (mode === "Latest Only") {
+                    this.queue = [text];
+                } else if (mode === "Skip Low Priority" && priority === 1 && this.queue.length > 2) {
+                    return;
+                } else {
+                    this.queue.push(text);
+                }
+                this.processQueue();
+            }
+
+            processQueue() {
+                if (this.isSpeaking || this.queue.length === 0 || !this.synth) return;
+                this.isSpeaking = true;
+                const text = this.queue.shift();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                const selectedVoice = this.voices.find(v => v.name === config.voice.name);
+                if (selectedVoice) utterance.voice = selectedVoice;
+                utterance.volume = config.voice.volume / 100;
+                utterance.rate = config.voice.rate / 200;
+
+                utterance.onend = () => {
+                    this.isSpeaking = false;
+                    setTimeout(() => this.processQueue(), 1800); // 1.8s delay padding matched to PySide engine
+                };
+                utterance.onerror = () => {
+                    this.isSpeaking = false;
+                    setTimeout(() => this.processQueue(), 500);
+                };
+
+                this.synth.speak(utterance);
+            }
+        }
+
+        const announcer = new WebTTSAnnouncer();
+
+        // ================= CONSOLE LOGGER TOOL =================
+        function appendLogTerminal(pilot, event, text) {
+            const now = new Date();
+            const ts = now.toTimeString().split(' ')[0];
+            const logBox = document.getElementById("log_terminal");
+            
+            const line = document.createElement("div");
+            line.innerHTML = `<span class="text-gray-500">[${ts}]</span> <span class="text-blue-400">&lt;${event}&gt;</span> <span class="text-yellow-300">${pilot}</span> <span class="text-gray-400">-&gt;</span> "${text}"`;
+            logBox.appendChild(line);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // ================= AUDIO WARNER BEEP =================
+        function triggerDisconnectBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // 800Hz beep frequency
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3); // 300ms fallback duration
+            } catch (e) {
+                console.error("Audio hardware context beep missed", e);
+            }
+        }
+
+        // ================= DATA CONFIG SYNC =================
+        function saveConfig() {
+            localStorage.setItem("vd_callout_config", JSON.stringify(config));
+        }
+
+        function loadConfigIntoUI() {
+            document.getElementById("txt_ip").value = config.connection.ip;
+            document.getElementById("spin_port").value = config.connection.port;
+            document.getElementById("slider_vol").value = config.voice.volume;
+            document.getElementById("val_vol").textContent = config.voice.volume + "%";
+            document.getElementById("slider_rate").value = config.voice.rate;
+            document.getElementById("val_rate").textContent = config.voice.rate;
+            
+            document.getElementById("chk_lap").checked = config.announcements.lap_times;
+            document.getElementById("chk_pb").checked = config.announcements.personal_bests;
+            document.getElementById("chk_fastest").checked = config.announcements.fastest_laps;
+            document.getElementById("chk_finish").checked = config.announcements.race_finish;
+            
+            document.getElementById("combo_holeshot").value = config.announcements.holeshot;
+            document.getElementById("txt_holeshot_pilot").value = config.announcements.holeshot_pilot;
+            document.getElementById("combo_templates").value = config.announcements.template;
+            document.getElementById("combo_queue_mode").value = config.queue_mode;
+
+            refreshPilotTableUI();
+        }
+
+        function syncUIToConfig() {
+            config.connection.ip = document.getElementById("txt_ip").value;
+            config.connection.port = parseInt(document.getElementById("spin_port").value) || 60003;
+            config.voice.name = document.getElementById("combo_voices").value;
+            config.voice.volume = parseInt(document.getElementById("slider_vol").value);
+            config.voice.rate = parseInt(document.getElementById("slider_rate").value);
+            
+            config.announcements.lap_times = document.getElementById("chk_lap").checked;
+            config.announcements.personal_bests = document.getElementById("chk_pb").checked;
+            config.announcements.fastest_laps = document.getElementById("chk_fastest").checked;
+            config.announcements.race_finish = document.getElementById("chk_finish").checked;
+            
+            config.announcements.holeshot = document.getElementById("combo_holeshot").value;
+            config.announcements.holeshot_pilot = document.getElementById("txt_holeshot_pilot").value;
+            config.announcements.template = document.getElementById("combo_templates").value;
+            config.queue_mode = document.getElementById("combo_queue_mode").value;
+            
+            saveConfig();
+        }
+
+        // ================= DYNAMIC TABLE WHITELIST =================
+        function refreshPilotTableUI() {
+            const tbody = document.getElementById("table_pilots_body");
+            tbody.innerHTML = "";
+            selectedRowIndex = null;
+
+            Object.keys(config.pilots).forEach((uid, index) => {
+                const pInfo = config.pilots[uid];
+                const row = document.createElement("tr");
+                row.className = "hover:bg-gray-700/50 cursor-pointer transition";
+                row.dataset.uid = uid;
+                row.dataset.index = index;
+
+                row.onclick = () => {
+                    document.querySelectorAll("#table_pilots_body tr").forEach(r => r.classList.remove("bg-blue-900/30", "border-blue-500"));
+                    row.classList.add("bg-blue-900/30");
+                    selectedRowIndex = uid;
+                };
+
+                const tdCheck = document.createElement("td");
+                tdCheck.className = "p-2 text-center";
+                const chk = document.createElement("input");
+                chk.type = "checkbox";
+                chk.checked = pInfo.enabled;
+                chk.className = "rounded border-gray-600 text-blue-600 bg-gray-700 focus:ring-0";
+                chk.onchange = (e) => {
+                    config.pilots[uid].enabled = e.target.checked;
+                    saveConfig();
+                };
+                tdCheck.appendChild(chk);
+
+                const tdName = document.createElement("td");
+                tdName.className = "p-2";
+                const inputName = document.createElement("input");
+                inputName.type = "text";
+                inputName.value = pInfo.name;
+                inputName.className = "bg-transparent w-full focus:outline-none focus:bg-gray-700 rounded px-1";
+                inputName.onchange = (e) => {
+                    config.pilots[uid].name = e.target.value;
+                    saveConfig();
+                };
+                tdName.appendChild(inputName);
+
+                const tdUid = document.createElement("td");
+                tdUid.className = "p-2 text-gray-400 font-mono text-xs";
+                tdUid.textContent = uid;
+
+                row.appendChild(tdCheck);
+                row.appendChild(tdName);
+                row.appendChild(tdUid);
+                tbody.appendChild(row);
+            });
+        }
+
+        // ================= TELEMETRY PARSING METRICS =================
+        function parseTelemetry(message) {
+            let data;
+            try {
+                data = JSON.parse(message.trim());
+            } catch (e) { return; }
+
+            if (typeof data !== "object" || data === null) return;
+
+            // 1. EXTRACT LIVE TRACK NAME
+            let discoveredTrack = null;
+            if (data.trackName) discoveredTrack = data.trackName;
+            else if (data.trackname) discoveredTrack = data.trackname;
+            else if (data.racestatus && typeof data.racestatus === "object") {
+                discoveredTrack = data.racestatus.trackName || data.racestatus.trackname;
+            }
+
+            if (discoveredTrack && String(discoveredTrack).trim()) {
+                const trackStr = String(discoveredTrack).trim();
+                if (currentTrack !== trackStr) {
+                    currentTrack = trackStr;
+                    appendLogTerminal("System", "Track Identified", `Active track changed to: "${currentTrack}"`);
+                }
+            }
+
+            // 2. GLOBAL PACKET RESET RULES
+            if (data.racestatus || data.racetype || data.countdown) {
+                const statusPayload = data.racestatus || {};
+                const action = statusPayload.raceAction || "";
+                if (["start", "abort", "race finished"].includes(action)) {
+                    holeshotTriggered = false;
+                    raceFastestLap = Infinity;
+                    pilotTimingTracker = {};
+                }
+//MG                return;
+            }
+
+            // 3. LIVE RACEDATA PROCESSOR
+            if (data.racedata) {
+                const racedataPayload = data.racedata;
+                Object.keys(racedataPayload).forEach(pilotName => {
+                    const telemetry = racedataPayload[pilotName];
+                    if (typeof telemetry !== "object") return;
+
+                    const uid = String(telemetry.uid || pilotName);
+                    if (!config.pilots[uid]) {
+                        config.pilots[uid] = { "name": pilotName, "enabled": false, "pb": {} };
+                        refreshPilotTableUI();
+                        saveConfig();
+                    }
+
+                    const normalizedData = {
+                        pilotId: uid,
+                        pilotName: pilotName,
+                        lap: parseInt(telemetry.get?.lap || telemetry.lap || 0),
+                        time: parseFloat(telemetry.get?.time || telemetry.time || 0.0),
+                        finish: telemetry.finished === true || String(telemetry.finished).toLowerCase() === "true"
+                    };
+
+                    processGateEvent(normalizedData);
+                });
+            }
+        }
+
+        function processGateEvent(data) {
+            const uid = data.pilotId;
+            const pilotName = data.pilotName;
+            const lap = data.lap;
+            const rawTime = data.time;
+            const isFinish = data.finish;
+
+            if (!pilotTimingTracker[uid]) {
+                pilotTimingTracker[uid] = {
+                    lastLap: null,
+                    lastLapChangeTime: null,
+                    completedLaps: 0,
+                    finishAnnounced: false
+                };
+            }
+
+            const tracker = pilotTimingTracker[uid];
+
+            if (tracker.lastLap !== null && lap < tracker.lastLap) {
+                tracker.lastLap = null;
+                tracker.lastLapChangeTime = null;
+                tracker.completedLaps = 0;
+                tracker.finishAnnounced = false;
+                if (lap <= 1) {
+                    holeshotTriggered = false;
+                    raceFastestLap = Infinity;
+                }
+            }
+
+            if (tracker.lastLap === null) {
+                tracker.lastLap = lap;
+                if (lap === 1) {
+                    tracker.lastLapChangeTime = rawTime;
+                    announceLapTime(uid, pilotName, 0, rawTime);
+                }
+                return;
+            }
+
+            if (lap > tracker.lastLap) {
+                if (tracker.lastLapChangeTime === null) {
+                    announceLapTime(uid, pilotName, 0, rawTime);
+                    tracker.lastLapChangeTime = rawTime;
+                } else {
+                    const lapDuration = rawTime - tracker.lastLapChangeTime;
+                    tracker.completedLaps += 1;
+                    announceLapTime(uid, pilotName, tracker.completedLaps, lapDuration);
+                    tracker.lastLapChangeTime = rawTime;
+                }
+                tracker.lastLap = lap;
+            }
+
+            if (isFinish && !tracker.finishAnnounced) {
+                if (tracker.lastLapChangeTime !== null) {
+                    const finalLapTime = rawTime - tracker.lastLapChangeTime;
+                    announceLapTime(uid, pilotName, tracker.completedLaps + 1, finalLapTime);
+                }
+
+                const finishText = `${pilotName} finished. Final time ${rawTime.toFixed(3)}`;
+                announcer.enqueue(finishText);
+                appendLogTerminal(pilotName, "Race Finish", finishText);
+                tracker.finishAnnounced = true;
+            }
+        }
+
+        function announceLapTime(uid, pilotName, lapNumber, lapDuration) {
+            if (!config.announcements.lap_times) return;
+            
+            const currentPilotCfg = config.pilots[uid];
+            if (!currentPilotCfg || !currentPilotCfg.enabled) return;
+
+            let spokenText = "";
+            let eventLabel = `Lap ${lapNumber}`;
+            let priority = 1;
+
+            if (!currentPilotCfg.pb) currentPilotCfg.pb = {};
+            const currentPb = currentPilotCfg.pb[currentTrack] !== undefined ? currentPilotCfg.pb[currentTrack] : Infinity;
+
+            let isFastestLap = false;
+            if (lapNumber > 0 && lapDuration < raceFastestLap) {
+                raceFastestLap = lapDuration;
+                isFastestLap = true;
+            }
+
+            if (lapNumber === 0) {
+                const holeshotMode = config.announcements.holeshot;
+                const holeshotPilot = config.announcements.holeshot_pilot;
+
+                if (holeshotMode === "none") return;
+                if (holeshotMode === "one_selected" && holeshotPilot !== uid) return;
+                if (holeshotMode === "first_only" && holeshotTriggered) return;
+
+                holeshotTriggered = true;
+                spokenText = `Hole_shot. ${pilotName}. ${lapDuration.toFixed(2)}.`;
+                eventLabel = "Holeshot";
+                priority = 2;
+            } 
+            else if (lapDuration < currentPb && config.announcements.personal_bests) {
+                currentPilotCfg.pb[currentTrack] = lapDuration;
+                spokenText = `${pilotName}. New personal best. ${lapDuration.toFixed(2)}.`;
+                eventLabel = "Personal Best";
+                priority = 2;
+                saveConfig();
+            } 
+            else if (isFastestLap && config.announcements.fastest_laps) {
+                spokenText = `Fastest lap of the race. ${pilotName}. ${lapDuration.toFixed(2)}.`;
+                eventLabel = "Fastest Lap";
+                priority = 2;
+            } 
+            else {
+                const templateMode = config.announcements.template;
+                spokenText = templateMode
+                    .replaceAll("{pilot}", pilotName)
+                    .replaceAll("{lap_number}", lapNumber)
+                    .replaceAll("{lap_time}", lapDuration.toFixed(2));
+            }
+
+            if (spokenText) {
+                announcer.enqueue(spokenText, priority);
+                appendLogTerminal(pilotName, eventLabel, spokenText);
+            }
+        }
+
+        // ================= CLIENT LAYER CONNECTION STACK =================
+        function toggleConnection() {
+            const btn = document.getElementById("btn_connect");
+            if (!isRunning) {
+                syncUIToConfig();
+                isRunning = true;
+                btn.disabled = true;
+                btn.textContent = "Disconnecting...";
+                wasUnreachableLogged = false;
+                wasAttemptLogged = false;
+                connectWebSocket();
+            } else {
+                isRunning = false;
+                btn.disabled = true;
+                btn.textContent = "Connecting...";
+                wasUnreachableLogged = false;
+                wasAttemptLogged = false;
+                disconnectWebSocket();
+            }
+        }
+
+        function connectWebSocket() {
+            const ip = config.connection.ip;
+            const port = config.connection.port;
+            const uri = `ws://${ip}:${port}/velocidrone`;
+            const statusLabel = document.getElementById("lbl_status");
+            const btn = document.getElementById("btn_connect");
+
+            if (!wasAttemptLogged) {
+            appendLogTerminal("System", "Network Status", `Attempting connection to ${uri}`);
+                wasAttemptLogged = true;
+            }
+            
+            try {
+                socket = new WebSocket(uri);
+
+                socket.onopen = () => {
+                    appendLogTerminal("System", "Network Status", "Connected to Velocidrone Simulator.");
+                    statusLabel.textContent = "Connected";
+                    statusLabel.className = "text-green-500 font-bold text-sm";
+                    btn.textContent = "Disconnect";
+                    btn.disabled = false;
+                    toggleInputFields(true);
+
+                    wasUnreachableLogged = false;
+                    wasAttemptLogged = false;
+
+                    // Setup Heartbeat Interval Loop Frame
+                    const hbSeconds = config.connection.heartbeat_seconds || 10;
+                    if (heartbeatInterval) clearInterval(heartbeatInterval);
+                    heartbeatInterval = setInterval(() => {
+                        if (socket && socket.readyState === WebSocket.OPEN) {
+                            socket.send("");
+                        }
+                    }, hbSeconds * 1000);
+                };
+
+                socket.onmessage = async (event) => {
+                    let rawData = event.data;
+
+                    // Check if the incoming data is a binary Blob and convert it to a string
+                    if (rawData instanceof Blob) {
+                        rawData = await rawData.text();
+                    }
+
+                    appendLogTerminal("Network", "Raw Packet", rawData);
+                    parseTelemetry(rawData);
+                };
+
+                socket.onclose = () => {
+                    cleanUpWebSocketReferences();
+                    statusLabel.textContent = "Disconnected";
+                    statusLabel.className = "text-red-500 font-bold text-sm";
+                    btn.textContent = "Connect";
+                    btn.disabled = false;
+                    toggleInputFields(false);
+
+                    if (isRunning) {
+                        triggerDisconnectBeep();
+                        if (!wasUnreachableLogged) {
+                        appendLogTerminal("System", "Network Status", "Simulator unreachable. Re-buffering loop connection...");
+                        wasUnreachableLogged = true;
+                        }
+                        setTimeout(() => { if (isRunning) connectWebSocket(); }, 3000);
+                    }
+                };
+
+                socket.onerror = () => {
+                    socket.close();
+                };
+
+            } catch (e) {
+                appendLogTerminal("System", "Error", e.message);
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (socket) socket.close();
+        }
+
+        function cleanUpWebSocketReferences() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+            socket = null;
+        }
+
+        function toggleInputFields(connected) {
+            document.getElementById("txt_ip").disabled = connected;
+            document.getElementById("spin_port").disabled = connected;
+        }
+
+        // ================= HARDWARE CAPTURED DOM EVENT HOOKS =================
+        document.getElementById("btn_connect").onclick = toggleConnection;
+        document.getElementById("btn_test_voice").onclick = () => announcer.speakNow("Testing audio announcement. System online.");
+        
+        // Input Sync Hook listeners
+        ["combo_voices", "combo_holeshot", "combo_queue_mode"].forEach(id => {
+            document.getElementById(id).onchange = syncUIToConfig;
+        });
+        ["txt_holeshot_pilot", "combo_templates"].forEach(id => {
+            document.getElementById(id).oninput = syncUIToConfig;
+        });
+        ["chk_lap", "chk_pb", "chk_fastest", "chk_finish"].forEach(id => {
+            document.getElementById(id).onchange = syncUIToConfig;
+        });
+
+        // Sliders runtime values
+        document.getElementById("slider_vol").oninput = (e) => {
+            document.getElementById("val_vol").textContent = e.target.value + "%";
+            syncUIToConfig();
+        };
+        document.getElementById("slider_rate").oninput = (e) => {
+            document.getElementById("val_rate").textContent = e.target.value;
+            syncUIToConfig();
+        };
+
+        // Table UI Mutators
+        document.getElementById("btn_add_pilot").onclick = () => {
+            const mockId = "MANUAL_" + (Object.keys(config.pilots).length + 1);
+            config.pilots[mockId] = { "name": "New Pilot", "enabled": true, "pb": {} };
+            refreshPilotTableUI();
+            saveConfig();
+        };
+
+        document.getElementById("btn_del_pilot").onclick = () => {
+            if (selectedRowIndex && config.pilots[selectedRowIndex]) {
+                delete config.pilots[selectedRowIndex];
+                refreshPilotTableUI();
+                saveConfig();
+            }
+        };
+
+        document.getElementById("btn_reset_pbs").onclick = () => {
+            Object.keys(config.pilots).forEach(uid => {
+                config.pilots[uid].pb = {};
+            });
+            saveConfig();
+            appendLogTerminal("System", "Settings", "All Personal Best times have been reset for all pilots.");
+        };
+
+        // ================= RUNTIME LIFECYCLE INITIALIZER =================
+        window.onload = () => {
+            loadConfigIntoUI();
+            appendLogTerminal("System", "Boot", "Initiating automatic connection sequence...");
+            // Single-shot automated activation sequences on load mapping Python runtime loop defaults
+            setTimeout(() => {
+                if (!isRunning) toggleConnection();
+            }, 500);
+        };
+        
+
+        // Trigger file picker when clicking the custom button
+        document.getElementById("btn_import").onclick = () => {
+            document.getElementById("file_import").click();
+        };
+
+        // Export current configuration setup into a downloadable file
+        document.getElementById("btn_export").onclick = () => {
+            try {
+                // 1. Convert the current config object into a formatted JSON string
+                const jsonString = JSON.stringify(config, null, 4);
+                
+                // 2. Wrap the string data into a file-like Blob object
+                const blob = new Blob([jsonString], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                // 3. Generate a hidden temporary link wrapper to prompt the browser dialog
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "config.json";
+                
+                // 4. Fire the click and clean up resources immediately after
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                // 5. Notify the terminal logger
+                appendLogTerminal("System", "Settings", "Configuration profile exported successfully!");
+            } catch (err) {
+                console.error("Export sequence failed:", err);
+                alert("An error occurred while exporting the configuration file.");
+            }
+        };
+
+        // Read the chosen json file and inject it into the app
+        document.getElementById("file_import").onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedConfig = JSON.parse(event.target.result);
+                    
+                    // Overwrite current configuration setup
+                    config = importedConfig;
+                    saveConfig();
+                    loadConfigIntoUI();
+                    
+                    appendLogTerminal("System", "Settings", "Successfully imported config.json profile!");
+                } catch (err) {
+                    alert("Error parsing JSON file. Make sure it is a valid config.json");
+                }
+            };
+            reader.readAsText(file);
+        };
+
+    </script>
+</body>
+</html>

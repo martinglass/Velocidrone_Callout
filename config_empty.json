@@ -1,0 +1,30 @@
+{
+    "connection": {
+        "ip": "192.168.0.1",
+        "port": 60003,
+        "heartbeat_seconds": 10
+    },
+    "voice": {
+        "name": "Daniel",
+        "volume": 52,
+        "rate": 253
+    },
+    "filters": {
+        "min_lap_time": 0,
+        "max_lap_time": 10
+    },
+    "announcements": {
+        "holeshot": "first_only",
+        "holeshot_pilot": "",
+        "lap_times": true,
+        "personal_bests": true,
+        "fastest_laps": false,
+        "position_changes": true,
+        "race_finish": true,
+        "template": "{pilot} {lap_time}"
+    },
+    "queue_mode": "Speak Everything",
+    "pilots": {
+    },
+    "tracks": {}
+}
