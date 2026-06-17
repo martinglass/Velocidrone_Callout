@@ -1,6 +1,9 @@
 # Velocidrone_Callout 
   - hear holeshot times, lap times and race times for pilots racing in Velocidrone, using system Text-to-Speech voices and languages.
 
+<img width="3016" height="1394" alt="VD Callout Screen" src="https://github.com/user-attachments/assets/ece0f74c-72bd-4eb1-9ddf-907d6d325fe9" />
+
+
 A lightweight, high-performance browser-based dashboard that connects to the **Velocidrone FPV Simulator** via WebSockets to provide real-time, text-to-speech (TTS) voice announcements for race timing events. 
 
 Designed for FPV drone pilots and race coordinators, this application monitors incoming telemetry feeds, filters data based on an adjustable pilot whitelist, tracks personal records across tracks, and queues spoken announcements seamlessly.
@@ -42,15 +45,15 @@ Designed for FPV drone pilots and race coordinators, this application monitors i
 
 ## 🛠️ Setup & Installation
 
-No installations, Node servers, or terminal commands are required. The program runs entirely client-side inside any modern web browser.
+No installations, Node servers, or terminal commands are required. The program runs entirely client-side inside any modern web browser, on the same computer or any device that can access the web server.
 
 1. Change directory to application folder - can be on same computer as Velocidrone or another, or an accessible local network IP.
-2. Download or save the application file as `VD_Callout.html` into the application folder.
+2. Download or save the file `index.html` into the destination folder.
 3. Double-click or drag the file into your preferred internet browser (Google Chrome, Microsoft Edge, or Apple Safari are recommended for best Web Speech API voice selections).
 4. Ensure Velocidrone is running on the same computer, or an accessible local network IP.
 5. Launch a race mode in Velocidrone. Ensure the simulation setup has its external websocket data transmission active (in Velocidrone Options General Menu).
-6. In **Terminal** run the command **python -m http.server 8000** (or python3 -m http.server 8000).
-7. The application will attempt to auto-connect and the status banner will flip to a green **Connected** alert if successful. 
+6. Launch the **Web Server** ; In **Terminal** run the command **python -m http.server 8000** (or python3 -m http.server 8000). The will serve index.html to any browser with access to the server computer.
+7. The application will attempt to auto-connect to the instance of Velocidrone running on the computer that is pointed to by the ip addresss given in the webpage. The status banner will flip to a green **Connected** alert if successful. 
 8. The background log terminal will note tracking updates and Websocket packets.
 
 ---
