@@ -1,5 +1,6 @@
 # Velocidrone_Callout 
-  - hear holeshot times, lap times and race times for pilots racing in Velocidrone, using system Text-to-Speech voices and languages.
+  **Hear callouts for holeshot times, lap times and race times<br> 
+  for pilots racing in Velocidrone, with voice and language options**
 
 <img width="3016" height="1394" alt="VD Callout Screen" src="https://github.com/user-attachments/assets/ece0f74c-72bd-4eb1-9ddf-907d6d325fe9" />
 
