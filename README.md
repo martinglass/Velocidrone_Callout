@@ -47,12 +47,12 @@ Designed for FPV drone pilots and race coordinators, this application monitors i
 
 No installations, Node servers, or terminal commands are required. The program runs entirely client-side inside any modern web browser, on the same computer or any device that can access the web server.
 
-1. Change directory to application folder - can be on same computer as Velocidrone or another, or an accessible local network IP.
-2. Download or save the file `index.html` into the destination folder.
-3. Double-click or drag the file into your preferred internet browser (Google Chrome, Microsoft Edge, or Apple Safari are recommended for best Web Speech API voice selections).
-4. Ensure Velocidrone is running on the same computer, or an accessible local network IP.
-5. Launch a race mode in Velocidrone. Ensure the simulation setup has its external websocket data transmission active (in Velocidrone Options General Menu).
-6. Launch the **Web Server** ; In **Terminal** run the command **python -m http.server 8000** (or python3 -m http.server 8000). The will serve index.html to any browser with access to the server computer.
+1. Create or move to your chosen destination application folder - can be on same computer as Velocidrone, or another accessible local network IP.
+2. Download or save the file `index.html` into the destination application folder.
+3. Ensure Velocidrone is running on the same computer, or an accessible local network IP.
+4. Launch a race mode in Velocidrone. Ensure the simulation setup has its external websocket data transmission active (in Velocidrone Options General Menu).
+5. * *(preferred option)* * a) Make sure the current folder contains the index.html file. b) Launch the **Web Server** ; In **Terminal** run the command **python -m http.server 8000** (or python3 -m http.server 8000) (This will serve the file index.html lcoated in the curren folder to any browser with access to the server computer.)
+6. * *(alternative option)* * Double-click or drag the index.html file into your preferred internet browser (Google Chrome, Microsoft Edge, or Apple Safari are recommended for best Web Speech API voice selections).
 7. The application will attempt to auto-connect to the instance of Velocidrone running on the computer that is pointed to by the ip addresss given in the webpage. The status banner will flip to a green **Connected** alert if successful. 
 8. The background log terminal will note tracking updates and Websocket packets.
 
