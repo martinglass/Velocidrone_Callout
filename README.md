@@ -1,5 +1,5 @@
 # Velocidrone_Callout 
-   - hear holeshot times, lap times and race times for pilots racing in Velocidrone, using system Text-to-Speech voices and languages.
+  - hear holeshot times, lap times and race times for pilots racing in Velocidrone, using system Text-to-Speech voices and languages.
 
 A lightweight, high-performance browser-based dashboard that connects to the **Velocidrone FPV Simulator** via WebSockets to provide real-time, text-to-speech (TTS) voice announcements for race timing events. 
 
